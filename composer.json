@@ -1,5 +1,5 @@
 {
-    "name": "galen/BlogSimple",
+    "name": "galen/blog-simple",
     "type": "library",
     "description": "Blog library for developers",
     "keywords": ["blog", "blogging"],
