@@ -1,5 +1,5 @@
 {
-    "name": "galen/validator",
+    "name": "galen/BlogSimple",
     "type": "library",
     "description": "Blog library for developers",
     "keywords": ["blog", "blogging"],
