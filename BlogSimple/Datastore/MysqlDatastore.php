@@ -316,8 +316,4 @@ Class MysqlDatastore implements DatastoreInterface {
         return $sql_where;
     }
 
-    public function exists() {
-        return true;
-    }
-
 }
