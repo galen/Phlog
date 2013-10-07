@@ -10,6 +10,7 @@ abstract class PaginatedCollectionAbstract extends CollectionAbstract {
      * If the collection has a previous page this will be true
      * 
      * @var boolean
+     * @access public
      */
     public $has_previous_page = false;
 
@@ -19,6 +20,7 @@ abstract class PaginatedCollectionAbstract extends CollectionAbstract {
      * If the collection has a next page this will be true
      * 
      * @var boolean
+     * @access public
      */
     public $has_next_page = false;
 
@@ -28,6 +30,7 @@ abstract class PaginatedCollectionAbstract extends CollectionAbstract {
      * Holds the total amount of entities that exist
      * 
      * @var int
+     * @access public
      */
     public $total_entities;
 
@@ -38,6 +41,7 @@ abstract class PaginatedCollectionAbstract extends CollectionAbstract {
      * 
      * @param $total_entitites Total amount of entities
      * @return void
+     * @access public
      */
     public function setTotalEntities( $total_entities ) {
         $this->total_entities = (int) $total_entities;
@@ -51,6 +55,7 @@ abstract class PaginatedCollectionAbstract extends CollectionAbstract {
      * $post_collection->getTotalEntities(); // Returns the total amount of posts
      * 
      * @return int Returns the total amount of entities
+     * @access public
      */
     public function getTotalEntities() {
         return $this->total_entities;

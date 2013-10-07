@@ -10,6 +10,7 @@ abstract class CollectionAbstract implements \IteratorAggregate, \ArrayAccess, \
      * Array of entity objects
      * 
      * @var array
+     * @access public
      */
     public $collection = array();
 
@@ -17,6 +18,7 @@ abstract class CollectionAbstract implements \IteratorAggregate, \ArrayAccess, \
      * Constructor
      * 
      * @param array $collection Array of entities
+     * @access public
      */
     public function __construct( array $collection ) {
         $this->setCollection( $collection );
@@ -27,6 +29,7 @@ abstract class CollectionAbstract implements \IteratorAggregate, \ArrayAccess, \
      * 
      * @param array $collection Array of entities
      * @return void
+     * @access public
      */
     public function setCollection( array $collection ) {
         $this->collection = $collection;

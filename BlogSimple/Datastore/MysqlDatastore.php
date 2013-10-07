@@ -6,6 +6,8 @@ use \BlogSimple\Entity\Collection\PostCollection;
 use \BlogSimple\Entity\Collection\CommentCollection;
 use \BlogSimple\Entity\Collection\AttributeCollection;
 use \BlogSimple\Entity\Comment;
+use \BlogSimple\Entity\Post;
+use \BlogSimple\Entity\Attribute;
 
 Class MysqlDatastore implements DatastoreInterface {
 
@@ -16,6 +18,7 @@ Class MysqlDatastore implements DatastoreInterface {
      * @param string $username Mysql username
      * @param string $password Mysql password
      * @param string $database Mysql database
+     * @access public
      */
     public function __construct( $host, $username, $password, $database ) {
         $this->connection = new \PDO( sprintf( 'mysql:dbname=%s;host=%s;', $database, $host ), $username, $password );
@@ -23,17 +26,17 @@ Class MysqlDatastore implements DatastoreInterface {
     }
 
    /**
-     * Get Entities With Attribute
+     * Get Posts With Attribute
      *
-     * This searches the EAV table for entities that match $entity_name, $attribute, $value
+     * This searches the posts table for entities that match $attribute, $value
      * 
      * @param string $entity_name Entity name e.g. Post
      * @param string $attribute Attribute e.g. Tag
      * @param string $value Value e.g. PHP (for posts tagged PHP)
      * @param int $offset Offset to use in the limit clause
      * @param int $length Number of posts to get
-     * @param boolean $get_pagination Populate the PostCollection with pagination info
      * @return PostCollection
+     * @access public
      */
     public function getPostsWithAttributeAndValue( $attribute, $value, $offset, $length, array $where = null ) {
 
@@ -74,8 +77,8 @@ Class MysqlDatastore implements DatastoreInterface {
      * @param int $offset Offset to use in the limit clause
      * @param int $length Number of posts to get
      * @param array $where Array of field => value pairs to add to the query
-     * @param boolean $get_pagination 
      * @return PostCollection
+     * @access public
      */
     public function getPosts( $offset, $length, array $where = null ) {
 
@@ -110,6 +113,7 @@ Class MysqlDatastore implements DatastoreInterface {
      * 
      * @param int $post_id Id of the post
      * @return Post
+     * @access public
      */
     public function getPost( $post_id, array $where = null ) {
         $sql_where = $where ? $this->buildWhereSql( $where ) : '';
@@ -133,12 +137,39 @@ Class MysqlDatastore implements DatastoreInterface {
     }
 
     /**
+     * Add a post
+     *
+     * All public fields in the post will be written to the table
+     * 
+     * @param $post Post to add
+     * @return int Returns 0 or 1
+     * @access public
+     */
+    public function addPost( Post $post ) {
+        $vars = get_object_vars( $post );
+        $sql = sprintf(
+            'insert into %s (%s) values ( :%s )',
+            'posts',
+            implode( ',', array_keys( $vars ) ),
+            implode( ',:', array_keys( $vars ) )
+        );
+        $statement = $this->connection->prepare( $sql );
+        foreach( $vars as $k => $v ) {
+            $statement->bindValue( ":$k", $v );
+        }
+        $statement->execute();
+        return $statement->rowCount();
+    }
+
+    /**
      * Get Previous Post
      *
      * Get the previous post from the posts table
      * 
      * @param int $post_id Id of the post
+     * @param array $where Array of field => value pairs to add to the query
      * @return Post
+     * @access public
      */
     public function getPreviousPost( $post_id, array $where = null ) {
         $sql_where = $where ? $this->buildWhereSql( $where ) : '';
@@ -167,7 +198,9 @@ Class MysqlDatastore implements DatastoreInterface {
      * Get the next post from the posts table
      * 
      * @param int $post_id Id of the post
+     * @param array $where Array of field => value pairs to add to the query
      * @return Post
+     * @access public
      */
     public function getNextPost( $post_id, array $where = null ) {
         $sql_where = $where ? $this->buildWhereSql( $where ) : '';
@@ -200,19 +233,27 @@ Class MysqlDatastore implements DatastoreInterface {
      * @param int $length Number of posts to get (default 999.. to get all comments)
      * @param array $where Array of field => value pairs to add to the query
      * @return CommentCollection
+     * @access public
      */
-    public function getPostComments( $post_id, $offset=0, $length=9999999999 ) {
+    public function getPostComments( $post_id, array $where = null, $offset=0, $length=9999999999 ) {
+        $sql_where = $where ? $this->buildWhereSql( $where ) : '';
         $statement = $this->connection->prepare(
             sprintf(
-                'select * from %s where %s=:post_id order by %s asc limit :offset, :length',
+                'select * from %s where %s=:post_id %4$s order by %s asc limit :offset, :length',
                 'comments',
                 'post_id',
-                'id'
+                'id',
+                $sql_where
             )
         );
         $statement->bindValue( ':post_id', $post_id );
         $statement->bindValue( ':offset', $offset, \PDO::PARAM_INT );
         $statement->bindValue( ':length', $length, \PDO::PARAM_INT );
+        if ( $where ) {
+            foreach( $where as $k => $v ) {
+                $statement->bindValue( ":$k", $v );
+            }
+        }
         $statement->execute();
         $statement->setFetchMode( \PDO::FETCH_CLASS, '\BlogSimple\Entity\Comment' );
         $comments = $statement->fetchAll();
@@ -226,6 +267,7 @@ Class MysqlDatastore implements DatastoreInterface {
      * 
      * @param int $post_id Post ID
      * @return AttributeCollection
+     * @access public
      */
     public function getPostAttributes( $post_id ) {
         $statement = $this->connection->prepare(
@@ -245,10 +287,36 @@ Class MysqlDatastore implements DatastoreInterface {
     }
 
     /**
+     * Add a post attribute
+     *
+     * All public fields in the attribute will be written to the table
+     * 
+     * @param $attribute Attribute to add
+     * @return int Returns 0 or 1
+     * @access public
+     */
+    public function addPostAttribute( Attribute $attribute ) {
+        $vars = get_object_vars( $attribute );
+        $sql = sprintf(
+            'insert into %s (%s) values ( :%s )',
+            'post_attributes',
+            implode( ',', array_keys( $vars ) ),
+            implode( ',:', array_keys( $vars ) )
+        );
+        $statement = $this->connection->prepare( $sql );
+        foreach( $vars as $k => $v ) {
+            $statement->bindValue( ":$k", $v );
+        }
+        $statement->execute();
+        return $statement->rowCount();
+    }
+
+    /**
      * Get all values for an attribute
      * 
      * @param string $attribute Attribute e.g. 'tag'
      * @return array
+     * @access public
      */
     public function getPostAttributeValues( $attribute, array $where = null ) {
         $sql_where = $where ? $this->buildWhereSql( $where ) : '';
@@ -286,6 +354,7 @@ Class MysqlDatastore implements DatastoreInterface {
      * 
      * @param $comment Comment to add
      * @return int Returns 0 or 1
+     * @access public
      */
     public function addComment( Comment $comment ) {
         $vars = get_object_vars( $comment );
@@ -305,8 +374,10 @@ Class MysqlDatastore implements DatastoreInterface {
 
     /**
      * Build where clause
+     * 
      * @param array $where Array of field => value pairs to add to the query
      * @return string Returns where string
+     * @access protected
      */
     protected function buildWhereSql( array $where ) {
         $sql_where = '';

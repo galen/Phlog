@@ -7,7 +7,8 @@ class PostCollection extends PaginatedCollectionAbstract {
     /**
      * Get Total Posts
      * 
-     * @return [type] [description]
+     * @return integer Totals posts
+     * @access public
      */
     public function getTotalPosts() {
         return $this->getTotalEntities();
@@ -17,6 +18,7 @@ class PostCollection extends PaginatedCollectionAbstract {
      * Set Total Posts
      * 
      * @param int $total_posts Total posts
+     * @access public
      */
     public function setTotalPosts( $total_posts ) {
         $this->setTotalEntities( $total_posts );
