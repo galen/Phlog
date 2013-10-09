@@ -1,15 +1,15 @@
 <?php
 
-namespace BlogSimple;
+namespace Phlog;
 
-use BlogSimple\Entity\Collection\PostCollection;
-use BlogSimple\Entity\Collection\CommentCollection;
-use BlogSimple\Entity\Collection\AttributeCollection;
-use BlogSimple\Entity\Post;
-use BlogSimple\Entity\Comment;
-use BlogSimple\Entity\Attribute;
+use Phlog\Entity\Collection\PostCollection;
+use Phlog\Entity\Collection\CommentCollection;
+use Phlog\Entity\Collection\AttributeCollection;
+use Phlog\Entity\Post;
+use Phlog\Entity\Comment;
+use Phlog\Entity\Attribute;
 
-class BlogSimple {
+class Phlog {
 
     /**
      * Datastore
@@ -33,7 +33,7 @@ class BlogSimple {
      * @param DatastoreInterface $datastore Datastore
      * @access public
      */
-    public function __construct( \BlogSimple\Datastore\DatastoreInterface $datastore ) {
+    public function __construct( \Phlog\Datastore\DatastoreInterface $datastore ) {
         $this->datastore = $datastore;
     }
 
@@ -79,7 +79,7 @@ class BlogSimple {
      * @access public
      */
     public function getTotalPosts( array $where = null ) {
-        return count( $this->datastore->getPosts( 0, 9999999999, $where ) );
+        return (int) $this->datastore->getTotalPosts( $where );
     }
 
     /**
@@ -182,7 +182,7 @@ class BlogSimple {
     public function getPost( $post_id, array $where = null ) {
         $post = $this->datastore->getPost( $post_id, $where );
         if ( !$post instanceof Post ) {
-            throw new \BlogSimple\Exception\InvalidPostException( 'Invalid' );
+            throw new \Phlog\Exception\InvalidPostException( 'Invalid' );
         }
         return $post;
     }

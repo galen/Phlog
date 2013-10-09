@@ -1,19 +1,21 @@
 <?php
 
-namespace BlogSimple\Datastore;
+namespace Phlog\Datastore;
 
-use \BlogSimple\Entity\Collection\PostCollection;
-use \BlogSimple\Entity\Collection\CommentCollection;
-use \BlogSimple\Entity\Collection\AttributeCollection;
-use \BlogSimple\Entity\Comment;
-use \BlogSimple\Entity\Post;
-use \BlogSimple\Entity\Attribute;
+use \Phlog\Entity\Collection\PostCollection;
+use \Phlog\Entity\Collection\CommentCollection;
+use \Phlog\Entity\Collection\AttributeCollection;
+use \Phlog\Entity\Comment;
+use \Phlog\Entity\Post;
+use \Phlog\Entity\Attribute;
 
 Interface DatastoreInterface {
 
     public function getPostsWithAttributeAndValue( $attribute, $value, $offset, $length, array $where = null );
 
     public function getPosts( $offset, $length, array $where = null );
+
+    public function getTotalPosts( array $where = null );
 
     public function getPost( $post_id, array $where = null );
 

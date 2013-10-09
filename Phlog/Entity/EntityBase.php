@@ -1,6 +1,6 @@
 <?php
 
-namespace BlogSimple\Entity;
+namespace Phlog\Entity;
 
 abstract class EntityBase {
 

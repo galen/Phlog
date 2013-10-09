@@ -1,11 +1,11 @@
 <?php
 
-namespace BlogSimple\Datastore;
+namespace Phlog\Datastore;
 
-use \BlogSimple\Entity\Collection\PostCollection;
-use \BlogSimple\Entity\Collection\CommentCollection;
-use \BlogSimple\Entity\Collection\AttributeCollection;
-use \BlogSimple\Entity\Comment;
+use \Phlog\Entity\Collection\PostCollection;
+use \Phlog\Entity\Collection\CommentCollection;
+use \Phlog\Entity\Collection\AttributeCollection;
+use \Phlog\Entity\Comment;
 
 Class SqliteDatastore extends MysqlDatastore {
 

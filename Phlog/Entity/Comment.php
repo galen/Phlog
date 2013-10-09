@@ -1,5 +1,5 @@
 <?php
 
-namespace BlogSimple\Entity;
+namespace Phlog\Entity;
 
 class Comment extends EntityBase {}

@@ -1,6 +1,6 @@
 <?php
 
-namespace BlogSimple\Entity\Collection;
+namespace Phlog\Entity\Collection;
 
 class AttributeCollection extends CollectionAbstract {
 

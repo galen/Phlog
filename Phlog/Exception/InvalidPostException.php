@@ -1,5 +1,5 @@
 <?php
 
-namespace BlogSimple\Exception;
+namespace Phlog\Exception;
 
 class InvalidPostException extends \Exception {}

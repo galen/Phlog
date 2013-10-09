@@ -1,13 +1,13 @@
 <?php
 
-namespace BlogSimple\Datastore;
+namespace Phlog\Datastore;
 
-use \BlogSimple\Entity\Collection\PostCollection;
-use \BlogSimple\Entity\Collection\CommentCollection;
-use \BlogSimple\Entity\Collection\AttributeCollection;
-use \BlogSimple\Entity\Comment;
-use \BlogSimple\Entity\Post;
-use \BlogSimple\Entity\Attribute;
+use \Phlog\Entity\Collection\PostCollection;
+use \Phlog\Entity\Collection\CommentCollection;
+use \Phlog\Entity\Collection\AttributeCollection;
+use \Phlog\Entity\Comment;
+use \Phlog\Entity\Post;
+use \Phlog\Entity\Attribute;
 
 Class MysqlDatastore implements DatastoreInterface {
 
@@ -64,7 +64,7 @@ Class MysqlDatastore implements DatastoreInterface {
         }
         $statement->execute();
 
-        $statement->setFetchMode( \PDO::FETCH_CLASS, 'BlogSimple\Entity\Post' );
+        $statement->setFetchMode( \PDO::FETCH_CLASS, 'Phlog\Entity\Post' );
         $posts = $statement->fetchAll();
         return new PostCollection( $posts );
     }
@@ -99,9 +99,29 @@ Class MysqlDatastore implements DatastoreInterface {
             }
         }
         $statement->execute();
-        $statement->setFetchMode( \PDO::FETCH_CLASS, 'BlogSimple\Entity\Post' );
+        $statement->setFetchMode( \PDO::FETCH_CLASS, 'Phlog\Entity\Post' );
         $posts = $statement->fetchAll();
         return new PostCollection( $posts );
+    }
+
+    public function getTotalPosts( array $where = null ) {
+
+        $sql_where = $where ? $this->buildWhereSql( $where ) : '';
+        $statement = $this->connection->prepare(
+            sprintf(
+                'select count(%s) from %s where 1=1 %s',
+                'id',
+                'posts',
+                $sql_where
+            )
+        );
+        if ( $where ) {
+            foreach( $where as $k => $v ) {
+                $statement->bindValue( ":$k", $v );
+            }
+        }
+        $statement->execute();
+        return $statement->fetch( \PDO::FETCH_COLUMN );
     }
 
     /**
@@ -132,7 +152,7 @@ Class MysqlDatastore implements DatastoreInterface {
             }
         }
         $statement->execute();
-        $statement->setFetchMode( \PDO::FETCH_CLASS, 'BlogSimple\Entity\Post' );
+        $statement->setFetchMode( \PDO::FETCH_CLASS, 'Phlog\Entity\Post' );
         return $statement->fetch();
     }
 
@@ -188,7 +208,7 @@ Class MysqlDatastore implements DatastoreInterface {
             }
         }
         $statement->execute();
-        $statement->setFetchMode( \PDO::FETCH_CLASS, 'BlogSimple\Entity\Post' );
+        $statement->setFetchMode( \PDO::FETCH_CLASS, 'Phlog\Entity\Post' );
         return $statement->fetch();
     }
 
@@ -219,7 +239,7 @@ Class MysqlDatastore implements DatastoreInterface {
             }
         }
         $statement->execute();
-        $statement->setFetchMode( \PDO::FETCH_CLASS, 'BlogSimple\Entity\Post' );
+        $statement->setFetchMode( \PDO::FETCH_CLASS, 'Phlog\Entity\Post' );
         return $statement->fetch();
     }
 
@@ -255,7 +275,7 @@ Class MysqlDatastore implements DatastoreInterface {
             }
         }
         $statement->execute();
-        $statement->setFetchMode( \PDO::FETCH_CLASS, '\BlogSimple\Entity\Comment' );
+        $statement->setFetchMode( \PDO::FETCH_CLASS, '\Phlog\Entity\Comment' );
         $comments = $statement->fetchAll();
         return new CommentCollection( $comments ); 
     }
@@ -281,7 +301,7 @@ Class MysqlDatastore implements DatastoreInterface {
         );
         $statement->bindValue( ':post_id', $post_id, \PDO::PARAM_INT );
         $statement->execute();
-        $statement->setFetchMode( \PDO::FETCH_CLASS, 'BlogSimple\Entity\Attribute' );
+        $statement->setFetchMode( \PDO::FETCH_CLASS, 'Phlog\Entity\Attribute' );
         $attributes = $statement->fetchAll();
         return new AttributeCollection( $attributes );
     }
