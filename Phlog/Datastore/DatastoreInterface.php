@@ -27,7 +27,7 @@ Interface DatastoreInterface {
 
     public function getPostAttributes( $post_id );
 
-    public function getPostAttributeValues( $attribute, array $where = null );
+    public function getAttributeValues( $attribute, array $where = null );
 
     public function addComment( Comment $comment );
 

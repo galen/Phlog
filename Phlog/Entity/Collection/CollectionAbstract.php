@@ -10,9 +10,9 @@ abstract class CollectionAbstract implements \IteratorAggregate, \ArrayAccess, \
      * Array of entity objects
      * 
      * @var array
-     * @access public
+     * @access protected
      */
-    public $collection = array();
+    protected $collection = array();
 
     /**
      * Constructor

@@ -17,7 +17,6 @@ Class SqliteDatastore extends MysqlDatastore {
      */
     public function __construct( $database ) {
         $this->connection = new \PDO( sprintf( 'sqlite:%s', $database ) );
-        $this->connection->setAttribute( \PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION );
     }
 
 }

@@ -62,9 +62,9 @@ class Phlog {
         if ( !$collection instanceof PostCollection ) {
             throw new \Exception( 'Wrong return type' );
         }
-        $total_posts = $this->getTotalPosts( $where );
-        $collection->has_next_page = ceil( $total_posts / $this->posts_per_page ) > $page ? true : false;
-        $collection->has_previous_page = $page > 1 ? true : false;
+        $total_posts = (int) $this->getTotalPosts( $where );
+        $collection->setNextPage( ceil( $total_posts / $this->posts_per_page ) > $page ? true : false );
+        $collection->setPreviousPage( $page > 1 ? true : false );
         $collection->setTotalPosts( $total_posts );
         return $collection;
     }
@@ -92,30 +92,6 @@ class Phlog {
      */
     public function addPost( Post $post ) {
         return $this->datastore->addPost( $post );
-    }
-
-    /**
-     * Organize Post Attributes
-     *
-     * Organize post attributes in an array keyed by the attribute
-     * 
-     * @param AttributeCollection $attribute_collection
-     * @param string $attribute_field Field name of the attribute
-     * @param string $value_field Field name of the value
-     * @return array Array of attributes
-     * @access public
-     */
-    public function organizePostAttributes( AttributeCollection $attribute_collection, $attribute_field, $value_field ) {
-        $attributes = array();
-        foreach( $attribute_collection as $attribute ) {
-            if ( isset( $attributes[$attribute->$attribute_field] ) ) {
-                $attributes[$attribute->$attribute_field][] = $attribute->$value_field;
-            }
-            else {
-                $attributes[$attribute->$attribute_field] = array( $attribute->$value_field );
-            }
-        }
-        return $attributes;
     }
 
     /**
@@ -164,8 +140,12 @@ class Phlog {
      * @return array
      * @access public
      */
-    public function getPostAttributeValues( $attribute, array $where = null ) {
-        return $this->datastore->getPostAttributeValues( $attribute, $where );
+    public function getAttributeValues( $attribute, array $where = null ) {
+        $collection = $this->datastore->getAttributeValues( $attribute, $where );
+        if ( !$collection instanceof AttributeCollection ) {
+            throw new \Exception( 'Wrong return type' );
+        }
+        return current( $collection->organize() );
     }
 
     /**
@@ -177,6 +157,7 @@ class Phlog {
      * 
      * @param int $post_id Id of the post
      * @return Post
+     * @throws InvalidPostException
      * @access public
      */
     public function getPost( $post_id, array $where = null ) {
@@ -205,8 +186,8 @@ class Phlog {
             throw new \Exception( 'Invalid return type' );
         }
         $total_posts = $this->getTotalPostsWithAttributeAndValue( $attribute, $value, $where );
-        $collection->has_next_page = ceil( $total_posts / $this->posts_per_page ) > $page ? true : false;
-        $collection->has_previous_page = $page > 1 ? true : false;
+        $collection->setNextPage( ceil( $total_posts / $this->posts_per_page ) > $page ? true : false );
+        $collection->setPreviousPage( $page > 1 ? true : false );
         $collection->setTotalPosts( $total_posts );
         return $collection;
     }

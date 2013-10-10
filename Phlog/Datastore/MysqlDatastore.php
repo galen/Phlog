@@ -9,7 +9,7 @@ use \Phlog\Entity\Comment;
 use \Phlog\Entity\Post;
 use \Phlog\Entity\Attribute;
 
-Class MysqlDatastore implements DatastoreInterface {
+Class MysqlDatastore extends PdoDatastoreAbstract implements DatastoreInterface {
 
     /**
      * Constructor
@@ -22,7 +22,6 @@ Class MysqlDatastore implements DatastoreInterface {
      */
     public function __construct( $host, $username, $password, $database ) {
         $this->connection = new \PDO( sprintf( 'mysql:dbname=%s;host=%s;', $database, $host ), $username, $password );
-        $this->connection->setAttribute( \PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION );
     }
 
    /**
@@ -39,17 +38,16 @@ Class MysqlDatastore implements DatastoreInterface {
      * @access public
      */
     public function getPostsWithAttributeAndValue( $attribute, $value, $offset, $length, array $where = null ) {
-
         $sql_where = $where ? $this->buildWhereSql( $where ) : '';
         $statement = $this->connection->prepare(
             $sql = sprintf(
                 'select %1$s.* from %s, %s where %2$s.%s = %1$s.%s and %2$s.%s=:attribute and %2$s.%s=:value %7$s order by %1$s.%4$s desc limit :offset, :length',
-                'posts',
-                'post_attributes',
-                'post_id',
-                'id',
-                'attribute',
-                'value',
+                $this->tables['posts'],
+                $this->tables['post_attributes'],
+                $this->table_fields['post_attributes.post_id'],
+                $this->table_fields['posts.id'],
+                $this->table_fields['post_attributes.attribute'],
+                $this->table_fields['post_attributes.value'],
                 $sql_where
             )
         );
@@ -86,9 +84,9 @@ Class MysqlDatastore implements DatastoreInterface {
         $statement = $this->connection->prepare(
             sprintf(
                 'select * from %s where 1=1 %s order by %s desc limit :offset, :length',
-                'posts',
+                $this->tables['posts'],
                 $sql_where,
-                'id'
+                $this->table_fields['posts.id']
             )
         );
         $statement->bindValue( ':offset', $offset, \PDO::PARAM_INT );
@@ -104,14 +102,21 @@ Class MysqlDatastore implements DatastoreInterface {
         return new PostCollection( $posts );
     }
 
+    /**
+     * Get total post count
+     *
+     * @param array $where Array of field => value pairs to add to the query
+     * @return int Number of total posts
+     * @access public
+     */
     public function getTotalPosts( array $where = null ) {
 
         $sql_where = $where ? $this->buildWhereSql( $where ) : '';
         $statement = $this->connection->prepare(
             sprintf(
                 'select count(%s) from %s where 1=1 %s',
-                'id',
-                'posts',
+                $this->table_fields['posts.id'],
+                $this->tables['posts'],
                 $sql_where
             )
         );
@@ -140,8 +145,8 @@ Class MysqlDatastore implements DatastoreInterface {
         $statement = $this->connection->prepare(
             sprintf(
                 'select * from %s where %s=:post_id %3$s',
-                'posts',
-                'id',
+                $this->tables['posts'],
+                $this->table_fields['posts.id'],
                 $sql_where
             )
         );
@@ -169,7 +174,7 @@ Class MysqlDatastore implements DatastoreInterface {
         $vars = get_object_vars( $post );
         $sql = sprintf(
             'insert into %s (%s) values ( :%s )',
-            'posts',
+            $this->tables['posts'],
             implode( ',', array_keys( $vars ) ),
             implode( ',:', array_keys( $vars ) )
         );
@@ -196,8 +201,8 @@ Class MysqlDatastore implements DatastoreInterface {
         $statement = $this->connection->prepare(
             sprintf(
                 'select * from %s where %2$s = ( select max(%2$s) from %1$s where %2$s < :post_id %3$s )',
-                'posts',
-                'id',
+                $this->tables['posts'],
+                $this->table_fields['posts.id'],
                 $sql_where
             )
         );
@@ -227,8 +232,8 @@ Class MysqlDatastore implements DatastoreInterface {
         $statement = $this->connection->prepare(
             sprintf(
                 'select * from %s where %2$s = ( select min(%2$s) from %1$s where %2$s > :post_id %3$s )',
-                'posts',
-                'id',
+                $this->tables['posts'],
+                $this->table_fields['posts.id'],
                 $sql_where
             )
         );
@@ -260,9 +265,9 @@ Class MysqlDatastore implements DatastoreInterface {
         $statement = $this->connection->prepare(
             sprintf(
                 'select * from %s where %s=:post_id %4$s order by %s asc limit :offset, :length',
-                'comments',
-                'post_id',
-                'id',
+                $this->tables['comments'],
+                $this->table_fields['comments.post_id'],
+                $this->table_fields['posts.id'],
                 $sql_where
             )
         );
@@ -293,17 +298,17 @@ Class MysqlDatastore implements DatastoreInterface {
         $statement = $this->connection->prepare(
             sprintf(
                 'select %s, %s from %s where %s=:post_id',
-                'attribute',
-                'value',
-                'post_attributes',
-                'post_id'
+                $this->table_fields['post_attributes.attribute'],
+                $this->table_fields['post_attributes.value'],
+                $this->tables['post_attributes'],
+                $this->table_fields['post_attributes.post_id']
             )
         );
         $statement->bindValue( ':post_id', $post_id, \PDO::PARAM_INT );
         $statement->execute();
         $statement->setFetchMode( \PDO::FETCH_CLASS, 'Phlog\Entity\Attribute' );
         $attributes = $statement->fetchAll();
-        return new AttributeCollection( $attributes );
+        return new AttributeCollection( $attributes, $this->table_fields['post_attributes.attribute'], $this->table_fields['post_attributes.value'] );
     }
 
     /**
@@ -319,7 +324,7 @@ Class MysqlDatastore implements DatastoreInterface {
         $vars = get_object_vars( $attribute );
         $sql = sprintf(
             'insert into %s (%s) values ( :%s )',
-            'post_attributes',
+            $this->tables['post_attributes'],
             implode( ',', array_keys( $vars ) ),
             implode( ',:', array_keys( $vars ) )
         );
@@ -338,22 +343,22 @@ Class MysqlDatastore implements DatastoreInterface {
      * @return array
      * @access public
      */
-    public function getPostAttributeValues( $attribute, array $where = null ) {
+    public function getAttributeValues( $attribute, array $where = null ) {
         $sql_where = $where ? $this->buildWhereSql( $where ) : '';
         $statement = $this->connection->prepare(
             sprintf(
-                'SELECT distinct %2$s.%1$s FROM %2$s
+                'SELECT distinct %2$s.%1$s, %2$s.%4$s FROM %2$s
                 LEFT outer JOIN %3$s
                 ON %3$s.%5$s = %2$s.%6$s
                 where
                 %2$s.%4$s=:attribute
                 and %3$s.%5$s is not null %7$s',
-                'value',
-                'post_attributes',
-                'posts',
-                'attribute',
-                'id',
-                'post_id',
+                $this->table_fields['post_attributes.value'],
+                $this->tables['post_attributes'],
+                $this->tables['posts'],
+                $this->table_fields['post_attributes.attribute'],
+                $this->table_fields['posts.id'],
+                $this->table_fields['post_attributes.post_id'],
                 $sql_where
             )
         );
@@ -363,8 +368,10 @@ Class MysqlDatastore implements DatastoreInterface {
                 $statement->bindValue( ":$k", $v );
             }
         }
+        $statement->setFetchMode( \PDO::FETCH_CLASS, 'Phlog\Entity\Attribute' );
         $statement->execute();
-        return $statement->fetchAll( \PDO::FETCH_OBJ );
+        $attributes = $statement->fetchAll();
+        return new AttributeCollection( $attributes, $this->table_fields['post_attributes.attribute'], $this->table_fields['post_attributes.value'] );
     }
 
     /**
@@ -380,7 +387,7 @@ Class MysqlDatastore implements DatastoreInterface {
         $vars = get_object_vars( $comment );
         $sql = sprintf(
             'insert into %s (%s) values ( :%s )',
-            'comments',
+            $this->tables['comments'],
             implode( ',', array_keys( $vars ) ),
             implode( ',:', array_keys( $vars ) )
         );
@@ -390,21 +397,6 @@ Class MysqlDatastore implements DatastoreInterface {
         }
         $statement->execute();
         return $statement->rowCount();
-    }
-
-    /**
-     * Build where clause
-     * 
-     * @param array $where Array of field => value pairs to add to the query
-     * @return string Returns where string
-     * @access protected
-     */
-    protected function buildWhereSql( array $where ) {
-        $sql_where = '';
-        foreach( $where as $k => $v ) {
-            $sql_where .= sprintf( "and $k=:$k " );
-        }
-        return $sql_where;
     }
 
 }
