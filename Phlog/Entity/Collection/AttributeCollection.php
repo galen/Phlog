@@ -55,6 +55,7 @@ class AttributeCollection extends CollectionAbstract {
                 $attributes[$attribute->{$this->attribute_field}] = array( $attribute->{$this->value_field} );
             }
         }
+
         return $attributes;
     }
 

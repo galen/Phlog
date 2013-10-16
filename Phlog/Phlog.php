@@ -145,7 +145,8 @@ class Phlog {
         if ( !$collection instanceof AttributeCollection ) {
             throw new \Exception( 'Wrong return type' );
         }
-        return current( $collection->organize() );
+        $attributes = $collection->organize();
+        return isset( $attributes[ $attribute ] ) ? $attributes[ $attribute ] : array();
     }
 
     /**
@@ -173,7 +174,6 @@ class Phlog {
      *
      * This searches the attributes table for posts that match $attribute, $value
      * 
-     * @param string $entity_name Entity name e.g. Post
      * @param string $attribute Attribute e.g. Tag
      * @param string $value Value e.g. PHP (for posts tagged PHP)
      * @param int $page Page to get
@@ -195,15 +195,14 @@ class Phlog {
    /**
      * Get Total Posts With Attribute and Value
      * 
-     * @param string $entity_name Entity name e.g. Post
      * @param string $attribute Attribute e.g. Tag
      * @param string $value Value e.g. PHP (for posts tagged PHP)
+     * @param array $where Array of field => value pairs to add to the query
      * @return int Number of posts with attribute and value
      * @access public
      */
     public function getTotalPostsWithAttributeAndValue( $attribute, $value, array $where = null ) {
-        $collection = $this->datastore->getPostsWithAttributeAndValue( $attribute, $value, 0, 99999999999, $where );
-        return count( $collection );
+        return $this->datastore->getTotalPostsWithAttributeAndValue( $attribute, $value, $where );
     }
 
     /**

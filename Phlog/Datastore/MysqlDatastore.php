@@ -29,11 +29,11 @@ Class MysqlDatastore extends PdoDatastoreAbstract implements DatastoreInterface 
      *
      * This searches the posts table for entities that match $attribute, $value
      * 
-     * @param string $entity_name Entity name e.g. Post
      * @param string $attribute Attribute e.g. Tag
      * @param string $value Value e.g. PHP (for posts tagged PHP)
      * @param int $offset Offset to use in the limit clause
      * @param int $length Number of posts to get
+     * @param array $where Array of field => value pairs to add to the query
      * @return PostCollection
      * @access public
      */
@@ -65,6 +65,43 @@ Class MysqlDatastore extends PdoDatastoreAbstract implements DatastoreInterface 
         $statement->setFetchMode( \PDO::FETCH_CLASS, 'Phlog\Entity\Post' );
         $posts = $statement->fetchAll();
         return new PostCollection( $posts );
+    }
+
+   /**
+     * Get Posts With Attribute
+     *
+     * This searches the posts table for entities that match $attribute, $value
+     * 
+     * @param string $attribute Attribute e.g. Tag
+     * @param string $value Value e.g. PHP (for posts tagged PHP)
+     * @param array $where Array of field => value pairs to add to the query
+     * @return PostCollection
+     * @access public
+     */
+    public function getTotalPostsWithAttributeAndValue( $attribute, $value, array $where = null ) {
+        $sql_where = $where ? $this->buildWhereSql( $where ) : '';
+        $statement = $this->connection->prepare(
+            $sql = sprintf(
+                'select count(%4$s) as count from %s, %s where %2$s.%s = %1$s.%s and %2$s.%s=:attribute and %2$s.%s=:value %7$s',
+                $this->tables['posts'],
+                $this->tables['post_attributes'],
+                $this->table_fields['post_attributes.post_id'],
+                $this->table_fields['posts.id'],
+                $this->table_fields['post_attributes.attribute'],
+                $this->table_fields['post_attributes.value'],
+                $sql_where
+            )
+        );
+        $statement->bindValue( ':attribute', $attribute );
+        $statement->bindValue( ':value', $value );
+        if ( $where ) {
+            foreach( $where as $k => $v ) {
+                $statement->bindValue( ":$k", $v );
+            }
+        }
+        $statement->execute();
+
+        return $statement->fetch( \PDO::FETCH_COLUMN );
     }
 
     /**
